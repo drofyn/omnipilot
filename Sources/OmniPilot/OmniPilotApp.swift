@@ -26,7 +26,11 @@ private struct MenuBarLabel: View {
 
     var body: some View {
         if manager.hasFailures {
-            Image(systemName: "exclamationmark.triangle.fill")
+            if let icon = MenuBarIcon.errorImage {
+                Image(nsImage: icon)
+            } else {
+                Image(systemName: "exclamationmark.triangle.fill")
+            }
         } else if let icon = MenuBarIcon.image {
             Image(nsImage: icon)
         } else {

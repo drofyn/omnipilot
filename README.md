@@ -93,14 +93,15 @@ Scripts/package.sh --all      # zip + dmg
 
 ## 图标
 
-应用图标与菜单栏图标都来自 `Design/OmniPilot.svg`，用系统自带工具生成（零依赖）：
+应用图标与菜单栏图标来自 `Design/OmniPilot.svg`，菜单栏失败态图标来自
+`Design/OmniPilotError.svg`（在菱形上镂空感叹号），均用系统自带工具生成（零依赖）：
 
 ```sh
-Scripts/make-icon.sh          # 生成 Resources/AppIcon.icns 与 Resources/MenuBarIcon*.png
+Scripts/make-icon.sh          # 生成 Resources/AppIcon.icns 与 Resources/MenuBarIcon*.png / MenuBarIconError*.png
 ```
 
 菜单栏图标以 **模板图** 方式使用：macOS 只取 alpha 通道并随浅色/深色菜单栏自动反色。
-当有隧道持续重连失败时，菜单栏会切换为警告符号。
+当有隧道持续重连失败时，菜单栏会切换为镂空感叹号的失败态图标。
 
 ## 目录结构
 
@@ -113,7 +114,8 @@ omnipilot/
 │  ├─ SSH/                         # ssh config 解析、命令构建
 │  └─ Runtime/                     # 进程守护、日志、孤儿进程清理
 ├─ Design/OmniPilot.svg            # 图标设计源
-├─ Resources/                      # AppIcon.icns / MenuBarIcon*.png（由脚本生成）
+├─ Design/OmniPilotError.svg       # 菜单栏失败态图标设计源
+├─ Resources/                      # AppIcon.icns / MenuBarIcon*.png / MenuBarIconError*.png（由脚本生成）
 ├─ Scripts/
 │  ├─ build-app.sh                 # 开发构建 → build/OmniPilot.app
 │  ├─ make-icon.sh                 # SVG → 应用图标 + 菜单栏图标

@@ -1,9 +1,12 @@
 #!/bin/bash
 #
 # 从 Design/OmniPilot.svg 生成：
-#   - Resources/AppIcon.icns        应用图标（Finder / 关于页）
-#   - Resources/MenuBarIcon.png     菜单栏状态图标（模板图，18pt）
-#   - Resources/MenuBarIcon@2x.png  同上 @2x（36px）
+#   - Resources/AppIcon.icns             应用图标（Finder / 关于页）
+#   - Resources/MenuBarIcon.png          菜单栏状态图标（模板图，18pt）
+#   - Resources/MenuBarIcon@2x.png       同上 @2x（36px）
+# 从 Design/OmniPilotError.svg 生成：
+#   - Resources/MenuBarIconError.png     菜单栏“失败态”图标（模板图，18pt）
+#   - Resources/MenuBarIconError@2x.png  同上 @2x（36px）
 #
 # 用 Scripts/RenderIcon.swift 直接光栅化 SVG：保留透明通道、尺寸精确。
 # （不用 qlmanage —— 它会给 SVG 铺不透明白底，模板图会变成白方块。）
@@ -15,6 +18,12 @@ cd "$(dirname "$0")/.."
 SVG="Design/OmniPilot.svg"
 if [ ! -f "$SVG" ]; then
     echo "error: 找不到图标源文件 $SVG" >&2
+    exit 1
+fi
+
+ERROR_SVG="Design/OmniPilotError.svg"
+if [ ! -f "$ERROR_SVG" ]; then
+    echo "error: 找不到菜单栏失败态图标源文件 $ERROR_SVG" >&2
     exit 1
 fi
 
@@ -39,8 +48,15 @@ swift Scripts/RenderIcon.swift "$SVG" \
     18   "Resources/MenuBarIcon.png" \
     36   "Resources/MenuBarIcon@2x.png"
 
+echo "==> 光栅化菜单栏失败态 SVG"
+swift Scripts/RenderIcon.swift "$ERROR_SVG" \
+    18   "Resources/MenuBarIconError.png" \
+    36   "Resources/MenuBarIconError@2x.png"
+
 echo "==> 合成 AppIcon.icns"
 iconutil -c icns "$ICONSET" -o "Resources/AppIcon.icns"
 
 echo "==> 完成"
-ls -lh Resources/AppIcon.icns Resources/MenuBarIcon.png Resources/MenuBarIcon@2x.png
+ls -lh Resources/AppIcon.icns \
+    Resources/MenuBarIcon.png Resources/MenuBarIcon@2x.png \
+    Resources/MenuBarIconError.png Resources/MenuBarIconError@2x.png
