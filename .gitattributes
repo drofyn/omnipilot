@@ -1,0 +1,12 @@
+# Normalise line endings to LF for text files.
+* text=auto eol=lf
+
+# Binary assets — never touch.
+*.icns binary
+*.png binary
+*.jpg binary
+*.pdf binary
+
+# Generated Xcode project files should not appear in diffs or language stats.
+OmniPilot.xcodeproj/** linguist-generated=true
+Sources/OmniPilot/Info.plist linguist-generated=true

@@ -1,0 +1,38 @@
+# ---- macOS ----
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ---- Xcode / build output ----
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xccheckout
+*.moved-aside
+*.hmap
+*.dSYM
+*.dSYM.zip
+*.ipa
+*.app
+
+# ---- XcodeGen generated (regenerate with `xcodegen generate`) ----
+OmniPilot.xcodeproj/
+Sources/OmniPilot/Info.plist
+
+# ---- Swift Package Manager ----
+.swiftpm/
+Packages/*/.build/
+Packages/*/.swiftpm/
+Packages/*/Package.resolved
+
+# ---- Local / secrets ----
+.env
+.env.*
+
+# ---- Editors ----
+.idea/
+*.swp

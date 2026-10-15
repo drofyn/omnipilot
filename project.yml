@@ -1,0 +1,72 @@
+name: OmniPilot
+
+options:
+  bundleIdPrefix: com.drofyn
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+  minimumXcodeGenVersion: "2.40.0"
+
+packages:
+  OmniPilotKit:
+    path: Packages/OmniPilotKit
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    SWIFT_STRICT_CONCURRENCY: minimal
+    ARCHS: arm64
+    ONLY_ACTIVE_ARCH: NO
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "-"
+    ENABLE_HARDENED_RUNTIME: YES
+    DEAD_CODE_STRIPPING: YES
+
+targets:
+  OmniPilot:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/OmniPilot
+      - path: Resources
+    dependencies:
+      - package: OmniPilotKit
+        product: OmniPilotKit
+    settings:
+      base:
+        PRODUCT_NAME: OmniPilot
+        PRODUCT_BUNDLE_IDENTIFIER: com.drofyn.omnipilot
+        COMBINE_HIDPI_IMAGES: YES
+    info:
+      path: Sources/OmniPilot/Info.plist
+      properties:
+        CFBundleName: OmniPilot
+        CFBundleDisplayName: OmniPilot
+        CFBundleIconFile: AppIcon
+        CFBundlePackageType: APPL
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        LSUIElement: true
+        NSPrincipalClass: NSApplication
+        NSSupportsAutomaticTermination: false
+        NSSupportsSuddenTermination: false
+        NSHumanReadableCopyright: "Copyright © 2026 drofyn. All rights reserved."
+
+schemes:
+  OmniPilot:
+    build:
+      targets:
+        OmniPilot: all
+    run:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+    <!-- 1. 上左切面（柔和亮蓝） -->
+    <path d="M256 56 L144 208 L256 230 Z" fill="#38BDF8"/>
+    
+    <!-- 2. 上右切面（微调色阶，过渡自然） -->
+    <path d="M256 56 L256 230 L368 208 Z" fill="#22D3EE"/>
+    
+    <!-- 3. 下左切面（温和过渡蓝） -->
+    <path d="M256 456 L144 208 L256 230 Z" fill="#0EA5E9"/>
+    
+    <!-- 4. 下右切面（柔和暗蓝，告别黑影过重） -->
+    <path d="M256 456 L256 230 L368 208 Z" fill="#0284C7"/>
+</svg>
