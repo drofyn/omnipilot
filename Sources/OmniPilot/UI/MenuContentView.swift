@@ -56,58 +56,38 @@ struct MenuContentView: View {
     @ViewBuilder
     private var tunnelSection: some View {
         VStack(alignment: .leading, spacing: 0) {
+            tunnelHeader
+            Divider()
             content
-
-            if !manager.tunnels.isEmpty {
-                Divider()
-                forwardList
-            }
-
+            Divider()
             HStack(spacing: 8) {
                 Button("全部启动") { manager.startAll() }
+                    .disabled(manager.tunnels.isEmpty)
                 Button("全部停止") { manager.stopAll() }
+                    .disabled(manager.tunnels.isEmpty)
                 Spacer()
                 Button("重载") { manager.reload() }
+                    .disabled(manager.isScanning)
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
-            .disabled(manager.tunnels.isEmpty)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
         }
     }
 
-    private var forwardList: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
-                Text("SSH 端口转发管理")
-                    .font(.caption)
-                    .bold()
-                Text(statusText)
-                    .font(.caption)
-                if manager.isScanning {
-                    ProgressView().controlSize(.small)
-                }
-                Spacer()
+    private var tunnelHeader: some View {
+        HStack(spacing: 8) {
+            Text("SSH 端口转发管理")
+                .font(.callout)
+                .bold()
+            Text(statusText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            if manager.isScanning {
+                ProgressView().controlSize(.small)
             }
-            ForEach(manager.tunnels) { tunnel in
-                VStack(alignment: .leading, spacing: 1) {
-                    HStack(spacing: 6) {
-                        Text(tunnel.host.alias)
-                            .font(.caption)
-                            .bold()
-                        Text(tunnel.host.remoteDisplay)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    ForEach(tunnel.host.forwards) { forward in
-                        Text("\(forward.kind.shortLabel)  \(forward.display)")
-                            .font(.caption2)
-                            .monospaced()
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
+            Spacer()
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -135,15 +115,14 @@ struct MenuContentView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 28)
         } else {
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(manager.tunnels) { tunnel in
-                        TunnelRow(tunnel: tunnel)
+            VStack(spacing: 0) {
+                ForEach(manager.tunnels) { tunnel in
+                    TunnelRow(tunnel: tunnel)
+                    if tunnel.id != manager.tunnels.last?.id {
                         Divider().padding(.leading, 12)
                     }
                 }
             }
-            .frame(maxHeight: 380)
         }
     }
 

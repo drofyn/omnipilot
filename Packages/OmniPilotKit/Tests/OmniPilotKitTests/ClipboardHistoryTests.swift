@@ -72,6 +72,57 @@ final class ClipboardHistoryTests: XCTestCase {
         XCTAssertTrue(ClipboardHistory(limit: 10, store: store).items.isEmpty)
     }
 
+    func testPinnedItemsStayAtTopAndSurviveEviction() throws {
+        let (directory, store) = try makeStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let history = ClipboardHistory(limit: 10, store: store)
+
+        history.record("pinned-one", at: Date(timeIntervalSince1970: 1))
+        let pinnedID = try XCTUnwrap(history.items.first?.id)
+        history.togglePin(pinnedID)
+
+        for value in 0..<12 {
+            history.record("item-\(value)", at: Date(timeIntervalSince1970: TimeInterval(value + 10)))
+        }
+
+        XCTAssertEqual(history.items.count, 10)
+        XCTAssertEqual(history.items.first?.text, "pinned-one")
+        XCTAssertEqual(history.items.first?.isPinned, true)
+        XCTAssertEqual(history.items[1].text, "item-11")
+    }
+
+    func testNotePersistsAcrossDuplicateRecordAndClearUnpinnedKeepsPinned() throws {
+        let (directory, store) = try makeStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let history = ClipboardHistory(limit: 50, store: store)
+
+        history.record("ssh -p 2222 root@10.0.0.1", at: Date(timeIntervalSince1970: 1))
+        let itemID = try XCTUnwrap(history.items.first?.id)
+        history.updateNote(itemID, note: " 生产跳板机 ")
+        history.togglePin(itemID)
+
+        history.record("temporary text", at: Date(timeIntervalSince1970: 2))
+        history.record("ssh -p 2222 root@10.0.0.1", at: Date(timeIntervalSince1970: 3))
+
+        XCTAssertEqual(history.items.first?.note, "生产跳板机")
+        XCTAssertEqual(history.items.first?.isPinned, true)
+
+        history.clearUnpinned()
+        XCTAssertEqual(history.items.count, 1)
+        XCTAssertEqual(history.items.first?.note, "生产跳板机")
+
+        history.updateNote(itemID, note: "   ")
+        XCTAssertNil(history.items.first?.note)
+    }
+
+    func testNormalizedLimitClampsToAllowedRangeAndDefaultsTo50() {
+        XCTAssertEqual(ClipboardHistory.normalizedLimit(0), 50)
+        XCTAssertEqual(ClipboardHistory.normalizedLimit(-5), 50)
+        XCTAssertEqual(ClipboardHistory.normalizedLimit(5), 10)
+        XCTAssertEqual(ClipboardHistory.normalizedLimit(128), 128)
+        XCTAssertEqual(ClipboardHistory.normalizedLimit(999), 500)
+    }
+
     private func makeStore() throws -> (URL, ClipboardStore) {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

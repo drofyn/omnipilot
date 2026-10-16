@@ -52,4 +52,9 @@ public struct PortForward: Hashable, Sendable, Identifiable {
             return "Socks5 \(bind.hostPortDescription)"
         }
     }
+
+    /// Address suitable for copying to the clipboard (`host:port`).
+    public var copyableAddress: String {
+        bind.hostPortDescription
+    }
 }
