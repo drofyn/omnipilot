@@ -1,12 +1,8 @@
 import SwiftUI
-import AppKit
 import OmniPilotKit
 
 struct TunnelRow: View {
     @ObservedObject var tunnel: ManagedTunnel
-    @ObservedObject var manager: TunnelManager
-    @ObservedObject private var ui = AppUIState.shared
-    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -66,39 +62,13 @@ struct TunnelRow: View {
 
     private var controls: some View {
         HStack(spacing: 6) {
-            if tunnel.state.isActive {
-                Button("停止") { tunnel.stop() }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-            } else {
-                Button("启动") { tunnel.start() }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-            }
-
-            Menu {
-                Button("重启") { tunnel.restart() }
-                Button("复制命令") { copyCommand() }
-                Divider()
-                Button("查看日志") { openLogs() }
-            } label: {
-                Image(systemName: "ellipsis.circle")
-            }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .frame(width: 24)
+            Button("启动") { tunnel.start() }
+                .disabled(tunnel.state.isActive)
+            Button("停止") { tunnel.stop() }
+                .disabled(!tunnel.state.isActive)
+            Button("重载") { tunnel.restart() }
         }
-    }
-
-    private func copyCommand() {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(tunnel.command.display, forType: .string)
-    }
-
-    private func openLogs() {
-        ui.settingsTab = .logs
-        openWindow(id: AppUIState.settingsWindowID)
-        NSApp.activate(ignoringOtherApps: true)
+        .buttonStyle(.bordered)
+        .controlSize(.small)
     }
 }

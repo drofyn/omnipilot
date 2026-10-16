@@ -7,13 +7,16 @@ struct MenuContentView: View {
     @ObservedObject private var ui = AppUIState.shared
     @Environment(\.openWindow) private var openWindow
 
+    @State private var launchAtLogin = LoginItem.isEnabled
+    @State private var loginItemError: String?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
             Divider()
-            content
+            tunnelSection
             Divider()
-            bulkActions
+            launchSection
             Divider()
             footer
         }
@@ -26,32 +29,79 @@ struct MenuContentView: View {
                 .resizable()
                 .interpolation(.high)
                 .frame(width: 26, height: 26)
-            VStack(alignment: .leading, spacing: 1) {
-                Text("OmniPilot").font(.headline)
-                Text(subtitle).font(.caption).foregroundStyle(.secondary)
-            }
+            Text("OmniPilot").font(.headline)
             Spacer()
-            if manager.isScanning {
-                ProgressView().controlSize(.small)
-            } else {
-                Button {
-                    manager.reload()
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                }
-                .buttonStyle(.borderless)
-                .help("重新读取 ssh config")
-            }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
     }
 
-    private var subtitle: String {
+    private var statusText: String {
         if manager.tunnels.isEmpty {
             return manager.isScanning ? "扫描中…" : "未发现带转发的 Host"
         }
         return "运行中 \(manager.runningCount)/\(manager.tunnels.count)"
+    }
+
+    @ViewBuilder
+    private var tunnelSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            content
+
+            if !manager.tunnels.isEmpty {
+                Divider()
+                forwardList
+            }
+
+            HStack(spacing: 8) {
+                Button("全部启动") { manager.startAll() }
+                Button("全部停止") { manager.stopAll() }
+                Spacer()
+                Button("重载") { manager.reload() }
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .disabled(manager.tunnels.isEmpty)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+        }
+    }
+
+    private var forwardList: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Text("SSH 端口转发管理")
+                    .font(.caption)
+                    .bold()
+                Text(statusText)
+                    .font(.caption)
+                    .foregroundStyle(.green)
+                if manager.isScanning {
+                    ProgressView().controlSize(.small)
+                }
+                Spacer()
+            }
+            ForEach(manager.tunnels) { tunnel in
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 6) {
+                        Text(tunnel.host.alias)
+                            .font(.caption)
+                            .bold()
+                        Text(tunnel.host.remoteDisplay)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    ForEach(tunnel.host.forwards) { forward in
+                        Text("\(forward.kind.shortLabel)  \(forward.display)")
+                            .font(.caption2)
+                            .monospaced()
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
 
     @ViewBuilder
@@ -79,7 +129,7 @@ struct MenuContentView: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(manager.tunnels) { tunnel in
-                        TunnelRow(tunnel: tunnel, manager: manager)
+                        TunnelRow(tunnel: tunnel)
                         Divider().padding(.leading, 12)
                     }
                 }
@@ -88,38 +138,51 @@ struct MenuContentView: View {
         }
     }
 
-    private var bulkActions: some View {
-        HStack(spacing: 8) {
-            Button("全部启动") { manager.startAll() }
-            Button("全部停止") { manager.stopAll() }
-            Spacer()
-            Button("重载") { manager.reload() }
+    private var launchSection: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            MenuCheckItemButton(
+                title: "开机时自动启动",
+                systemImage: "arrow.up.forward.app",
+                isOn: launchAtLogin
+            ) {
+                applyLoginItem(!launchAtLogin)
+            }
+            if let loginItemError {
+                Text(loginItemError)
+                    .font(.caption2)
+                    .foregroundStyle(.red)
+                    .padding(.horizontal, 6)
+            }
         }
-        .buttonStyle(.bordered)
-        .controlSize(.small)
-        .disabled(manager.tunnels.isEmpty)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 6)
     }
 
     private var footer: some View {
         VStack(alignment: .leading, spacing: 1) {
-            MenuItemButton(title: "打开 ssh config", systemImage: "doc.text") {
-                NSWorkspace.shared.open(manager.configPath)
-            }
-            MenuItemButton(title: "设置…", systemImage: "gearshape") {
+            MenuItemButton(title: "设置", systemImage: "gearshape") {
                 openSettings(tab: .general)
             }
-            MenuItemButton(title: "关于 OmniPilot", systemImage: "info.circle") {
+            MenuItemButton(title: "关于", systemImage: "info.circle") {
                 openSettings(tab: .about)
             }
-            Divider().padding(.vertical, 4)
             MenuItemButton(title: "退出", systemImage: "power") {
                 NSApp.terminate(nil)
             }
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 6)
+    }
+
+    private func applyLoginItem(_ enabled: Bool) {
+        do {
+            try LoginItem.setEnabled(enabled)
+            loginItemError = nil
+            launchAtLogin = LoginItem.isEnabled
+        } catch {
+            loginItemError = "设置失败：\(error.localizedDescription)"
+            launchAtLogin = LoginItem.isEnabled
+        }
     }
 
     private func openSettings(tab: SettingsTab) {
@@ -143,6 +206,36 @@ struct MenuItemButton: View {
                 Image(systemName: systemImage).frame(width: 16)
                 Text(title)
                 Spacer()
+            }
+            .contentShape(Rectangle())
+            .padding(.vertical, 4)
+            .padding(.horizontal, 6)
+            .background(hovering ? Color.secondary.opacity(0.15) : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: 5))
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+    }
+}
+
+/// A borderless toggle styled like a native menu item with a checkmark.
+struct MenuCheckItemButton: View {
+    let title: String
+    let systemImage: String
+    let isOn: Bool
+    let action: () -> Void
+
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: systemImage).frame(width: 16)
+                Text(title)
+                Spacer()
+                Image(systemName: "checkmark")
+                    .font(.system(size: 12, weight: .semibold))
+                    .opacity(isOn ? 1 : 0)
             }
             .contentShape(Rectangle())
             .padding(.vertical, 4)
