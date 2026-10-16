@@ -27,4 +27,11 @@ final class PortSpecTests: XCTestCase {
         XCTAssertEqual(PortSpec(address: nil, port: 4096).description, "4096")
         XCTAssertEqual(PortSpec(address: "127.0.0.1", port: 4096).description, "127.0.0.1:4096")
     }
+
+    func testHostPortDescription() {
+        XCTAssertEqual(PortSpec(address: nil, port: 1080).hostPortDescription, "127.0.0.1:1080")
+        XCTAssertEqual(PortSpec(address: "", port: 1080).hostPortDescription, "127.0.0.1:1080")
+        XCTAssertEqual(PortSpec(address: "0.0.0.0", port: 1080).hostPortDescription, "0.0.0.0:1080")
+        XCTAssertEqual(PortSpec(address: "::1", port: 1080).hostPortDescription, "[::1]:1080")
+    }
 }

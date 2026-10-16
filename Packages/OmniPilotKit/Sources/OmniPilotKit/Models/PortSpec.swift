@@ -24,6 +24,14 @@ public struct PortSpec: Hashable, Sendable, CustomStringConvertible {
         return "\(port)"
     }
 
+    public var hostPortDescription: String {
+        let resolvedAddress = (address?.isEmpty == false) ? address! : "127.0.0.1"
+        if resolvedAddress.contains(":") {
+            return "[\(resolvedAddress)]:\(port)"
+        }
+        return "\(resolvedAddress):\(port)"
+    }
+
     public static func parse(_ raw: String) -> PortSpec? {
         let token = raw.trimmingCharacters(in: .whitespaces)
         guard !token.isEmpty else { return nil }

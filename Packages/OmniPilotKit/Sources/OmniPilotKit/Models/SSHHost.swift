@@ -1,7 +1,7 @@
 import Foundation
 
 /// A concrete `Host` entry from `~/.ssh/config` that declares at least one
-/// `LocalForward` or `RemoteForward`.
+/// `LocalForward`, `RemoteForward`, or `DynamicForward`.
 public struct SSHHost: Hashable, Sendable, Identifiable {
     public let alias: String
     public let hostname: String
@@ -23,6 +23,7 @@ public struct SSHHost: Hashable, Sendable, Identifiable {
 
     public var localForwards: [PortForward] { forwards.filter { $0.kind == .local } }
     public var remoteForwards: [PortForward] { forwards.filter { $0.kind == .remote } }
+    public var dynamicForwards: [PortForward] { forwards.filter { $0.kind == .dynamic } }
 
     /// `user@hostname` (with port when it is not the default 22) for display.
     public var remoteDisplay: String {
@@ -41,6 +42,7 @@ public struct SSHHost: Hashable, Sendable, Identifiable {
         var parts: [String] = []
         if !localForwards.isEmpty { parts.append("\(localForwards.count) 条本地转发") }
         if !remoteForwards.isEmpty { parts.append("\(remoteForwards.count) 条远程转发") }
+        if !dynamicForwards.isEmpty { parts.append("\(dynamicForwards.count) 条动态转发") }
         return parts.joined(separator: " · ")
     }
 }

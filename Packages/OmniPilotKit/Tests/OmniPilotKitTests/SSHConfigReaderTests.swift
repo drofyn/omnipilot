@@ -51,6 +51,25 @@ final class SSHConfigReaderTests: XCTestCase {
         XCTAssertEqual(host.remoteForwards.first?.bind.port, 9090)
     }
 
+    func testScanFindsDynamicForwards() throws {
+        let url = try writeTempConfig("""
+        Host socksonly
+            HostName socks.example.com
+            DynamicForward 1080
+            DynamicForward 0.0.0.0:1081
+        """)
+        let result = SSHConfigReader().scan(configPath: url)
+        XCTAssertEqual(result.hosts.count, 1)
+
+        let host = try XCTUnwrap(result.hosts.first)
+        XCTAssertEqual(host.alias, "socksonly")
+        XCTAssertEqual(host.dynamicForwards.count, 2)
+        XCTAssertEqual(host.dynamicForwards[0].kind, .dynamic)
+        XCTAssertEqual(host.dynamicForwards[0].kind.shortLabel, "D")
+        XCTAssertEqual(host.dynamicForwards[0].display, "Socks5 127.0.0.1:1080")
+        XCTAssertEqual(host.dynamicForwards[1].display, "Socks5 0.0.0.0:1081")
+    }
+
     func testTunnelCommandContainsExpectedOptions() {
         let command = SSHCommandBuilder.tunnelCommand(
             alias: "myserver",

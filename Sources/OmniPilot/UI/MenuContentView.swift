@@ -85,7 +85,6 @@ struct MenuContentView: View {
                     .bold()
                 Text(statusText)
                     .font(.caption)
-                    .foregroundStyle(.green)
                 if manager.isScanning {
                     ProgressView().controlSize(.small)
                 }
@@ -120,7 +119,7 @@ struct MenuContentView: View {
             VStack(spacing: 6) {
                 Text(manager.isScanning
                      ? "正在读取 ssh config…"
-                     : "没有找到带 LocalForward / RemoteForward 的 Host")
+                     : "没有找到带 LocalForward / RemoteForward / DynamicForward 的 Host")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)

@@ -2,7 +2,7 @@ import Foundation
 import Darwin
 
 /// Reads `~/.ssh/config` and resolves every concrete `Host` that declares a
-/// `LocalForward` or `RemoteForward`.
+/// `LocalForward`, `RemoteForward`, or `DynamicForward`.
 ///
 /// The ssh configuration is treated as **read-only**. Host aliases are collected
 /// by a light scan of `Host` / `Include` lines, then each alias is resolved with
@@ -119,6 +119,12 @@ public struct SSHConfigReader: Sendable {
                    let bind = PortSpec.parse(specs[0]),
                    let target = PortSpec.parse(specs[1]) {
                     forwards.append(PortForward(kind: kind, bind: bind, target: target))
+                }
+            case "dynamicforward":
+                let specs = Array(parts.dropFirst())
+                if let first = specs.first,
+                   let bind = PortSpec.parse(first) {
+                    forwards.append(PortForward(kind: .dynamic, bind: bind))
                 }
             default:
                 break
