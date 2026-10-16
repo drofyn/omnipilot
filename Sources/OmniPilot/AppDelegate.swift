@@ -14,6 +14,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         Notifier.shared.bootstrap()
 
+        let storedLimit = UserDefaults.standard.integer(forKey: ClipboardPreferences.historyLimitKey)
+        ClipboardHistory.shared.setLimit(storedLimit)
+        PasteboardMonitor.shared.start()
+
         let manager = TunnelManager.shared
         manager.onRepeatedFailure = { tunnel in
             Notifier.shared.post(
@@ -29,6 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        PasteboardMonitor.shared.stop()
         TunnelManager.shared.terminateAllImmediately()
     }
 }

@@ -4,8 +4,11 @@ import OmniPilotKit
 
 struct MenuContentView: View {
     @ObservedObject var manager: TunnelManager
+    @ObservedObject private var clipboardHistory = ClipboardHistory.shared
     @ObservedObject private var ui = AppUIState.shared
     @Environment(\.openWindow) private var openWindow
+    @AppStorage(ClipboardPreferences.historyLimitKey)
+    private var clipboardHistoryLimit = ClipboardHistory.defaultLimit
 
     @State private var launchAtLogin = LoginItem.isEnabled
     @State private var loginItemError: String?
@@ -14,13 +17,20 @@ struct MenuContentView: View {
         VStack(alignment: .leading, spacing: 0) {
             header
             Divider()
+            ClipboardSectionView(history: clipboardHistory, historyLimit: $clipboardHistoryLimit)
+                .padding(.horizontal, 12)
+            Divider()
             tunnelSection
             Divider()
             launchSection
             Divider()
             footer
         }
-        .frame(width: 390)
+        .frame(width: 540)
+        .onAppear(perform: syncClipboardHistoryLimit)
+        .onChange(of: clipboardHistoryLimit) { newValue in
+            applyClipboardHistoryLimit(newValue)
+        }
     }
 
     private var header: some View {
@@ -189,6 +199,18 @@ struct MenuContentView: View {
         ui.settingsTab = tab
         openWindow(id: AppUIState.settingsWindowID)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func syncClipboardHistoryLimit() {
+        applyClipboardHistoryLimit(clipboardHistoryLimit)
+    }
+
+    private func applyClipboardHistoryLimit(_ value: Int) {
+        let normalized = ClipboardHistory.normalizedLimit(value)
+        if normalized != clipboardHistoryLimit {
+            clipboardHistoryLimit = normalized
+        }
+        clipboardHistory.setLimit(normalized)
     }
 }
 
