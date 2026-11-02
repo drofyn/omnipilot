@@ -7,9 +7,12 @@ struct ClipboardSectionView: View {
     @Binding var historyLimit: Int
 
     @State private var searchQuery = ""
-    @State private var copiedItemID: UUID?
+    @State private var copyFeedback: CopyFeedback?
     @State private var editingNoteItemID: UUID?
-    @State private var copyFeedbackTask: Task<Void, Never>?
+
+    private var copiedItemID: UUID? {
+        copyFeedback?.itemID
+    }
 
     private var filteredItems: [ClipboardItem] {
         let trimmed = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -25,7 +28,13 @@ struct ClipboardSectionView: View {
             .padding(10)
             .frame(height: 378)
             .background(Color(nsColor: .controlBackgroundColor).opacity(0.45))
-            .onDisappear { copyFeedbackTask?.cancel() }
+            .task(id: copyFeedback) {
+                guard let feedback = copyFeedback else { return }
+                try? await Task.sleep(nanoseconds: 1_200_000_000)
+                guard !Task.isCancelled, copyFeedback == feedback else { return }
+                copyFeedback = nil
+            }
+            .onDisappear { copyFeedback = nil }
     }
 
     private var historyContent: some View {
@@ -160,16 +169,14 @@ struct ClipboardSectionView: View {
 
     private func selectItem(_ item: ClipboardItem) {
         PasteboardMonitor.shared.writeToPasteboard(item.text)
-        copiedItemID = item.id
-        copyFeedbackTask?.cancel()
-        copyFeedbackTask = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 1_200_000_000)
-            guard !Task.isCancelled else { return }
-            if copiedItemID == item.id {
-                copiedItemID = nil
-            }
-        }
+        let token = (copyFeedback?.token ?? 0) &+ 1
+        copyFeedback = CopyFeedback(itemID: item.id, token: token)
     }
+}
+
+private struct CopyFeedback: Equatable {
+    let itemID: UUID
+    let token: Int
 }
 
 private struct ClipboardLimitPicker: View {

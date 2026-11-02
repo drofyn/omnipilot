@@ -74,8 +74,7 @@ private struct ForwardLineButton: View {
     let forward: PortForward
 
     @State private var hovering = false
-    @State private var copied = false
-    @State private var resetTask: Task<Void, Never>?
+    @State private var copyFeedback: CopyFeedback?
 
     var body: some View {
         Button(action: copyAddress) {
@@ -85,7 +84,7 @@ private struct ForwardLineButton: View {
                     .monospaced()
                     .foregroundStyle(hovering ? .primary : .secondary)
 
-                if copied {
+                if copyFeedback != nil {
                     Text("已复制 \(forward.copyableAddress)")
                         .font(.caption2)
                         .foregroundStyle(.green)
@@ -103,17 +102,22 @@ private struct ForwardLineButton: View {
         .buttonStyle(.plain)
         .help("点击复制 \(forward.copyableAddress)")
         .onHover { hovering = $0 }
-        .onDisappear { resetTask?.cancel() }
+        .task(id: copyFeedback) {
+            guard let feedback = copyFeedback else { return }
+            try? await Task.sleep(nanoseconds: 1_200_000_000)
+            guard !Task.isCancelled, copyFeedback == feedback else { return }
+            copyFeedback = nil
+        }
+        .onDisappear { copyFeedback = nil }
     }
 
     private func copyAddress() {
         PasteboardMonitor.shared.writeToPasteboard(forward.copyableAddress)
-        copied = true
-        resetTask?.cancel()
-        resetTask = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 1_200_000_000)
-            guard !Task.isCancelled else { return }
-            copied = false
-        }
+        let token = (copyFeedback?.token ?? 0) &+ 1
+        copyFeedback = CopyFeedback(token: token)
     }
+}
+
+private struct CopyFeedback: Equatable {
+    let token: Int
 }
